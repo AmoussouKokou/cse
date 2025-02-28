@@ -1,0 +1,357 @@
+---
+title: "Analyse en Composantes Principales (ACP)"
+author: "Kokou AMOUSSOU"
+date: "`r Sys.time()`"
+format: html
+editor: visual
+output:
+  html_document: 
+    toc_depth: 4
+    toc_float: yes
+    code_folding: show
+    theme: cerulean
+    toc: yes
+    number_sections: yes
+    fig_width: 10
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(echo = TRUE)
+library(reticulate)
+# use_python("C:/chemin/vers/python.exe")
+library(dplyr)
+library(readxl)
+```
+
+
+```{r}
+library(funModeling)
+library(explore)
+```
+
+# Installation et Description
+```{r}
+library(readr)
+xtrain <- read_csv("data/raw/cs-training.csv")
+xtest <- read_csv("data/raw/cs-test.csv")
+data_dict <- read_excel("data/raw/Data Dictionary.xls")
+```
+
+```{r}
+xtrain = xtrain %>% select(-'...1')
+xtest = xtest %>% select(-'...1')
+xtrain; xtest
+```
+
+```{r}
+View(xtrain)
+```
+
+```{r}
+data_dict %>% View
+```
+
+```{r}
+data_dict %>% select(Description) %>% pull()
+```
+
+```{r}
+names(xtrain)
+```
+
+```{r}
+decrire_df <- function(df) {
+  # Nombre total d'observations
+  total_obs <- nrow(df)
+  
+  # Fonction pour résumer chaque colonne
+  resume_col <- function(col) {
+    type_col <- class(col)
+    nb_na <- sum(is.na(col))
+    pct_na <- round((nb_na / total_obs) * 100, 2)
+    
+    if (is.numeric(col)) {
+      stats <- c(
+        min = min(col, na.rm = TRUE),
+        q1 = quantile(col, 0.25, na.rm = TRUE),
+        median = median(col, na.rm = TRUE),
+        mean = mean(col, na.rm = TRUE),
+        q3 = quantile(col, 0.75, na.rm = TRUE),
+        max = max(col, na.rm = TRUE),
+        sd = sd(col, na.rm = TRUE)
+      )
+    } else if (is.factor(col) || is.character(col)) {
+      freqs <- table(col, useNA = "ifany")
+      stats <- paste(names(freqs), freqs, sep = ":", collapse = " | ")
+    } else {
+      stats <- "Non applicable"
+    }
+    
+    list(
+      type = type_col,
+      nb_na = nb_na,
+      pct_na = pct_na,
+      resume = stats
+    )
+  }
+  
+  # Appliquer la fonction à chaque colonne et organiser les résultats
+  res <- lapply(df, resume_col)
+  
+  # Convertir la liste en data.frame lisible
+  resume_df <- data.frame(
+    Variable = names(res),
+    Type = sapply(res, function(x) x$type),
+    Valeurs_manquantes = sapply(res, function(x) x$nb_na),
+    Pourcentage_manquantes = sapply(res, function(x) x$pct_na),
+    Résumé = sapply(res, function(x) paste(x$resume, collapse = ", "))
+  )
+  
+  return(resume_df)
+}
+```
+
+```{r}
+decrire_df(xtrain) %>% View
+```
+2 variables ont des valeurs manquantes
+
+# Traitement variable
+
+## SeriousDlqin2yrs
+
+Personne ayant un retard de paiement de 90 jours ou plus
+
+```{r}
+library(questionr)
+freq(xtrain$SeriousDlqin2yrs)
+```
+
+Déséquilibre à régler
+
+## RevolvingUtilizationOfUnsecuredLines
+
+Solde total des cartes de crédit et des lignes de crédit personnelles, 
+à l'exception des biens immobiliers et des dettes à tempérament telles que les prêts automobiles, 
+divisé par la somme des limites de crédit 
+
+```{r}
+x = xtrain$RevolvingUtilizationOfUnsecuredLines
+# Résumé statistique de la variable quantitative
+summary(x)
+```
+
+```{r}
+library(ggplot2)
+
+# Histogramme avec ggplot
+ggplot(xtrain, aes(x = RevolvingUtilizationOfUnsecuredLines)) +
+  geom_histogram(binwidth = 5, fill = "skyblue", color = "black", alpha = 0.7) +
+  labs(title = "Distribution de la variable quantitative", x = "Quantitative Var", y = "Fréquence")
+
+```
+
+```{r}
+# Boxplot
+ggplot(xtrain, aes(x = "", y = RevolvingUtilizationOfUnsecuredLines)) +
+  geom_boxplot(fill = "skyblue") +
+  labs(title = "Boxplot de la variable quantitative", x = "", y = "Quantitative Var")
+
+```
+
+Des valeurs aberrantes ou extrêmes.
+
+```{r}
+xtrain %>% filter(RevolvingUtilizationOfUnsecuredLines >= 20000)
+xtrain %>% filter(RevolvingUtilizationOfUnsecuredLines < 2) %>% 
+  ggplot(aes(x = "", y = RevolvingUtilizationOfUnsecuredLines)) +
+  geom_boxplot(fill = "skyblue") +
+  labs(title = "Boxplot de la variable quantitative", x = "", y = "Quantitative Var")
+```
+
+```{r}
+xtrain %>% filter(RevolvingUtilizationOfUnsecuredLines >= 1.5) %>% count() / nrow(xtrain)
+```
+
+```{r}
+# Densité
+ggplot(
+  xtrain %>% filter(RevolvingUtilizationOfUnsecuredLines <= 1.5), 
+  aes(x = RevolvingUtilizationOfUnsecuredLines)
+) +
+  geom_density(fill = "skyblue", alpha = 0.7) +
+  labs(title = "Densité de la variable quantitative", x = "Quantitative Var", y = "Densité") +
+  theme_light()
+```
+
+
+## age
+
+```{r}
+x = xtrain$age
+# Résumé statistique de la variable quantitative
+summary(x)
+```
+
+```{r}
+library(ggplot2)
+
+# Histogramme avec ggplot
+ggplot(xtrain, aes(x = age)) +
+  geom_histogram(binwidth = 5, fill = "skyblue", color = "black", alpha = 0.7) +
+  labs(title = "Distribution de la variable quantitative", x = "Quantitative Var", y = "Fréquence")
+
+```
+
+```{r}
+# Boxplot
+ggplot(xtrain, aes(x = "", y = age)) +
+  geom_boxplot(fill = "skyblue") +
+  labs(title = "Boxplot de la variable quantitative", x = "", y = "Quantitative Var")
+
+```
+
+
+```{r}
+xtrain_cor = xtrain
+xtrain_cor[xtrain_cor$age==0, "age"] <- NA
+```
+
+```{r}
+xtrain %>% filter(RevolvingUtilizationOfUnsecuredLines >= 2) %>% count() / nrow(xtrain)
+```
+
+```{r}
+# Densité
+ggplot(
+  xtrain %>% filter(RevolvingUtilizationOfUnsecuredLines <= 2), 
+  aes(x = RevolvingUtilizationOfUnsecuredLines)
+) +
+  geom_density(fill = "skyblue", alpha = 0.7) +
+  labs(title = "Densité de la variable quantitative", x = "Quantitative Var", y = "Densité") +
+  theme_light()
+```
+
+
+
+
+
+# Valeurs manquantes et traitement
+
+```{r}
+# Nombre de valeurs manquantes par colonne
+colSums(is.na(xtrain))
+
+# Proportion de valeurs manquantes par colonne
+(sapply(xtrain, function(x) mean(is.na(x))) * 100) %>% View
+```
+
+```{R}
+library(naniar)
+
+# Visualiser les valeurs manquantes
+gg_miss_var(xtrain)          # Nombre de valeurs manquantes par variable
+```
+
+```{R}
+library(ggplot2)
+
+xtrain %>%
+  mutate(manquant_var1 = ifelse(is.na(MonthlyIncome), "Manquant", "Non manquant")) %>%
+  ggplot(aes(x = manquant_var1, y = age)) +
+  geom_boxplot() +
+  labs(title = "Distribution de l'âge selon les valeurs manquantes de var1")
+
+```
+
+```{R}
+library(gridExtra)
+
+# Graphique 1 : Distribution de l'âge selon les valeurs manquantes de 'MonthlyIncome'
+p1 <- xtrain %>%
+  mutate(manquant_var1 = ifelse(is.na(MonthlyIncome), "Manquant", "Non manquant")) %>%
+  ggplot(aes(x = manquant_var1, y = age)) +
+  geom_boxplot() +
+  labs(title = "Distribution de l'âge selon les valeurs manquantes de MonthlyIncome")
+
+# Graphique 2 : Distribution de l'âge selon les valeurs manquantes de 'OtherVariable'
+p2 <- xtrain %>%
+  mutate(manquant_var2 = ifelse(is.na(NumberOfDependents), "Manquant", "Non manquant")) %>%
+  ggplot(aes(x = manquant_var2, y = age)) +
+  geom_boxplot() +
+  labs(title = "Distribution de l'âge selon les valeurs manquantes de OtherVariable")
+
+# Affichage côte à côte
+grid.arrange(p1, p2, ncol = 2)
+
+```
+
+```{R}
+# Graphique 1 : Distribution de l'âge selon les valeurs manquantes de 'MonthlyIncome'
+p1 <- xtrain %>%
+  mutate(manquant_var1 = ifelse(is.na(MonthlyIncome), "Manquant", "Non manquant")) %>%
+  ggplot(aes(x = manquant_var1, y = RevolvingUtilizationOfUnsecuredLines)) +
+  geom_boxplot() +
+  labs(title = "Distribution de l'âge selon les valeurs manquantes de MonthlyIncome")
+
+# Graphique 2 : Distribution de l'âge selon les valeurs manquantes de 'OtherVariable'
+p2 <- xtrain %>%
+  mutate(manquant_var2 = ifelse(is.na(NumberOfDependents), "Manquant", "Non manquant")) %>%
+  ggplot(aes(x = manquant_var2, y = RevolvingUtilizationOfUnsecuredLines)) +
+  geom_boxplot() +
+  labs(title = "Distribution de l'âge selon les valeurs manquantes de OtherVariable")
+
+# Affichage côte à côte
+grid.arrange(p1, p2, ncol = 2)
+
+```
+
+```{R}
+xtrain %>% filter(RevolvingUtilizationOfUnsecuredLines >= 2) %>% count(SeriousDlqin2yrs)
+```
+
+## Une ACP
+```{r}
+library(explor)
+library(FactoMineR)
+```
+
+```{r}
+num_ligne <- function(ind, donnees) match(ind, rownames(donnees), nomatch = 0)
+num_col <- function(Var, donnees) match(Var, colnames(donnees), nomatch = 0)
+```
+
+```{r}
+acp <- PCA(
+  xtrain, scale.unit = T, ncp = Inf, 
+  quanti.sup = NULL, quali.sup = num_col("SeriousDlqin2yrs", xtrain), graph = F
+)
+```
+
+```{r}
+explor(acp)
+```
+
+```{r}
+res <- explor::prepare_results(acp)
+explor::PCA_var_plot(res, xax = 1, yax = 2, var_sup = TRUE, var_sup_choice = "SeriousDlqin2yrs",
+    var_lab_min_contrib = 0, col_var = "Type", labels_size = 10, scale_unit = TRUE,
+    transitions = TRUE, labels_positions = NULL, xlim = c(-0.357, 1.22), ylim = c(-0.418,
+        1.16))
+```
+
+```{r}
+res <- explor::prepare_results(acp)
+explor::PCA_var_plot(res, xax = 1, yax = 3, var_sup = TRUE, var_sup_choice = "SeriousDlqin2yrs",
+    var_lab_min_contrib = 0, col_var = "Type", labels_size = 12, scale_unit = TRUE,
+    transitions = TRUE, labels_positions = NULL, xlim = c(-0.634, 1.5), ylim = c(-1.07,
+        1.06))
+```
+
+```{r}
+res <- explor::prepare_results(acp)
+explor::PCA_var_plot(res, xax = 1, yax = 4, var_sup = TRUE, var_sup_choice = "SeriousDlqin2yrs",
+    var_lab_min_contrib = 0, col_var = "Type", labels_size = 12, scale_unit = TRUE,
+    transitions = TRUE, labels_positions = NULL, xlim = c(-0.474, 1.34), ylim = c(-0.778,
+        1.03))
+```

@@ -14,17 +14,17 @@ def download_kaggle_data():
     else:
         print("📂 'GiveMeSomeCredit.zip' est déjà téléchargé.")
 
-# Décompresser le fichier GiveMeSomeCredit.zip dans le répertoire data_files
+# Décompresser le fichier GiveMeSomeCredit.zip dans le répertoire data/raw
 def unzip_data():
     if os.path.exists('GiveMeSomeCredit.zip'):
-        if not os.path.exists('data_files'):  # Vérifie si le dossier data_files existe
-            os.makedirs('data_files')  # Crée le répertoire data_files s'il n'existe pas
-        if not os.path.exists('data_files/cs-training.csv'):  # Vérifie si les fichiers sont déjà extraits
+        if not os.path.exists('data/raw'):  # Vérifie si le dossier data/raw existe
+            os.makedirs('data/raw')  # Crée le répertoire data/raw s'il n'existe pas
+        if not os.path.exists('data/raw/cs-training.csv'):  # Vérifie si les fichiers sont déjà extraits
             with zipfile.ZipFile('GiveMeSomeCredit.zip', 'r') as zip_ref:
-                zip_ref.extractall('data_files')  # Décompresse dans data_files
-            print("✅ Extraction de 'GiveMeSomeCredit.zip' terminée dans 'data_files'.")
+                zip_ref.extractall('data/raw')  # Décompresse dans data/raw
+            print("✅ Extraction de 'GiveMeSomeCredit.zip' terminée dans 'data/raw'.")
         else:
-            print("📂 Les fichiers sont déjà extraits dans 'data_files'.")
+            print("📂 Les fichiers sont déjà extraits dans 'data/raw'.")
     else:
         print("❌ Le fichier 'GiveMeSomeCredit.zip' n'existe pas.")
 
@@ -40,16 +40,46 @@ def delete_zip_files():
         else:
             print(f"📂 Le fichier {zip_file} n'existe pas ou a déjà été supprimé.")
 
+def create_folders():
+    # Créer les dossiers
+    if not os.path.exists('data'):
+        os.makedirs('data')
+    
+    if not os.path.exists('data/external'):
+        os.makedirs('data/external')
+    
+    if not os.path.exists('data/processed'):
+        os.makedirs('data/processed')
+    
+    if not os.path.exists('data/raw'):
+        os.makedirs('data/raw')
+    
+    if not os.path.exists('config'):
+        os.makedirs('config')
+
+    if not os.path.exists('notebooks'):
+        os.makedirs('notebooks')
+    
+    if not os.path.exists('src'):
+        os.makedirs('src')
+
 # Fonction principale
 def main():
+    # Créer les dossiers
+    create_folders()
+
     # Étape 1: Télécharger les données
     download_kaggle_data()
 
-    # Étape 2: Décompresser le fichier GiveMeSomeCredit.zip dans data_files
+    # Étape 2: Décompresser le fichier GiveMeSomeCredit.zip dans data/raw
     unzip_data()
 
     # Étape 5: Supprimer les fichiers ZIP et les fichiers dézippés après extraction
     delete_zip_files()
+
+    # Créer le répertoire data/processed si il n'existe pas
+    if not os.path.exists('data/processed'):
+        os.makedirs('data/processed')
 
 # Appeler la fonction principale
 if __name__ == "__main__":
