@@ -1,0 +1,12 @@
+Variable Name,Description,Type,descriptions_fr
+SeriousDlqin2yrs,Person experienced 90 days past due delinquency or worse,Y/N,Personne ayant un retard de paiement de 90 jours ou plus
+RevolvingUtilizationOfUnsecuredLines,Total balance on credit cards and personal lines of credit except real estate and no installment debt like car loans divided by the sum of credit limits,percentage,"Solde total des cartes de crédit et des lignes de crédit personnelles, à l'exception des biens immobiliers et des dettes à tempérament telles que les prêts automobiles, divisé par la somme des limites de crédit"
+age,Age of borrower in years,integer,Âge de l'emprunteur en années
+NumberOfTime30-59DaysPastDueNotWorse,Number of times borrower has been 30-59 days past due but no worse in the last 2 years.,integer,"Nombre de fois où l'emprunteur a été en retard de paiement de 30 à 59 jours, mais pas plus, au cours des deux dernières années"
+DebtRatio,"Monthly debt payments, alimony,living costs divided by monthy gross income",percentage,"Paiements mensuels des dettes, pensions alimentaires, frais de subsistance divisés par le revenu mensuel brut"
+MonthlyIncome,Monthly income,real,Revenu mensuel
+NumberOfOpenCreditLinesAndLoans,Number of Open loans (installment like car loan or mortgage) and Lines of credit (e.g. credit cards),integer,"Nombre de prêts ouverts (à tempérament comme un prêt automobile ou un prêt hypothécaire) et de lignes de crédit (par exemple, cartes de crédit)"
+NumberOfTimes90DaysLate,Number of times borrower has been 90 days or more past due.,integer,Nombre de fois où l'emprunteur a été en retard de 90 jours ou plus
+NumberRealEstateLoansOrLines,Number of mortgage and real estate loans including home equity lines of credit,integer,"Nombre de prêts hypothécaires et immobiliers, y compris les lignes de crédit immobilier"
+NumberOfTime60-89DaysPastDueNotWorse,Number of times borrower has been 60-89 days past due but no worse in the last 2 years.,integer,"Nombre de fois où l'emprunteur a été en retard de 60 à 89 jours, mais pas plus au cours des deux dernières années"
+NumberOfDependents,"Number of dependents in family excluding themselves (spouse, children etc.)",integer,"Nombre de personnes à charge dans la famille, à l'exclusion de l'emprunteur lui-même (conjoint, enfants, etc.)"

@@ -15,9 +15,9 @@ lapply(packages, library, character.only = TRUE)
 
 # ----------------- Importation des données -----------------
 print("------------ Imports ------------") 
-train <- read_csv("data_files/cs-training.csv") %>% select(-1)
-test <- read_csv("data_files/cs-test.csv") %>% select(-1)
-data_dict <- read_excel("data_files/Data Dictionary.xls")
+train <- read_csv("data/raw/cs-training.csv") %>% select(-1)
+test <- read_csv("data/raw/cs-test.csv") %>% select(-1)
+data_dict <- read_excel("data/raw/Data Dictionary.xls")
 
 # ----------------- Data Dictionary --------------------------------
 
@@ -53,7 +53,7 @@ data_dict = data_dict %>% mutate(descriptions_fr = descriptions)
 
 # Export
 
-write_csv(data_dict, "data_files_cor/data_dict.csv")
+write_csv(data_dict, "data/processed/dictionary.csv")
 
 
 # ----------------- Train data -----------------
