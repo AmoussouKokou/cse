@@ -6,9 +6,10 @@ from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, 
     roc_curve, auc, classification_report
 )
+from sklearn.utils.validation import check_is_fitted
 
 class PipelineEvaluator(BaseEstimator, TransformerMixin):
-    def __init__(self, pipeline, scoring="accuracy"):
+    def __init__(self, pipeline, scoring="f1-score"):
         """
         Classe pour évaluer un pipeline scikit-learn.
 
@@ -22,14 +23,17 @@ class PipelineEvaluator(BaseEstimator, TransformerMixin):
         self.pipeline = pipeline
         self.scoring = scoring
 
-    def fit(self, X, y):
+    def fit(self, X=None, y=None):
         """Entraîne le pipeline."""
-        self.pipeline.fit(X, y)
+        try:
+            check_is_fitted(self.pipeline)
+        except:
+            self.pipeline.fit(X, y)
         return self  # Respecte la convention sklearn
 
-    def transform(self, X):
+    def transform(self, X=None):
         """Applique la transformation du pipeline."""
-        return self.pipeline.transform(X)
+        return X # self.pipeline.transform(X)
 
     def predict(self, X, y_true):
         """
@@ -110,15 +114,26 @@ class PipelineEvaluator(BaseEstimator, TransformerMixin):
         y_proba = self.pipeline.predict_proba(X)[:, 1]  # Probabilité de la classe positive
         fpr, tpr, _ = roc_curve(y_true, y_proba)
         roc_auc = auc(fpr, tpr)
-
+        
+        sns.set(style="whitegrid", palette="muted")
         plt.figure(figsize=(6, 5))
-        plt.plot(fpr, tpr, color="blue", lw=2, label=f"ROC curve (AUC = {roc_auc:.4f})")
-        plt.plot([0, 1], [0, 1], color="gray", linestyle="--")
-        plt.xlabel("Taux de faux positifs (FPR)")
-        plt.ylabel("Taux de vrais positifs (TPR)")
-        plt.title("Courbe ROC")
-        plt.legend(loc="lower right")
+        plt.plot(fpr, tpr, color="dodgerblue", lw=2, label=f"ROC curve (AUC = {roc_auc:.4f})")
+        plt.plot([0, 1], [0, 1], color="gray", linestyle="--", lw=2)
+        plt.xlabel("Taux de faux positifs (FPR)", fontsize=12)
+        plt.ylabel("Taux de vrais positifs (TPR)", fontsize=12)
+        plt.title("Courbe ROC", fontsize=14)
+        plt.legend(loc="lower right", fontsize=12)
         plt.show()
+        return roc_auc
+
+        # plt.figure(figsize=(6, 5))
+        # plt.plot(fpr, tpr, color="blue", lw=2, label=f"ROC curve (AUC = {roc_auc:.4f})")
+        # plt.plot([0, 1], [0, 1], color="gray", linestyle="--")
+        # plt.xlabel("Taux de faux positifs (FPR)")
+        # plt.ylabel("Taux de vrais positifs (TPR)")
+        # plt.title("Courbe ROC")
+        # plt.legend(loc="lower right")
+        # plt.show()
         
         
 if __name__=="__main__":
