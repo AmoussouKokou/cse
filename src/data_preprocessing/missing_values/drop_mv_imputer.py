@@ -4,6 +4,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 import warnings
 import sys
 import shutil
+import os
 
 class DropMvImputer(TransformerMixin, BaseEstimator):
     """
@@ -62,7 +63,7 @@ class DropMvImputer(TransformerMixin, BaseEstimator):
                 import pandas as pd
                 df = pd.read_csv('{root_path_cor}/data/temp/liste.txt', header=None)
                 liste = df[0].tolist()
-                y = y.loc[~y.index.isin(liste)].reset_index(drop=True)
+                y = y.loc[~y.index.isin(liste)]
                 """
                 print(message)
                 
