@@ -24,7 +24,9 @@ class PipelineEvaluator(BaseEstimator, TransformerMixin):
         self.scoring = scoring
 
     def fit(self, X=None, y=None):
-        """Entraîne le pipeline."""
+        """Entraîne le pipeline.
+        #todo: probleme avec l'etat de fit du pipeline
+        """
         try:
             check_is_fitted(self.pipeline)
         except:
